@@ -10,6 +10,15 @@ def score(mean, sd, stat):
 
 def score_field(name):
 	return name + '_SCR'
+
+# Required to test values because numpy.nanmean not available until numpy 1.8
+def is_numeric(num):
+	try:
+		float(num)
+	except (ValueError, TypeError):
+		return False
+	else:
+		return True
 	
 inlyr = arcpy.GetParameterAsText(0)
 fields = arcpy.GetParameterAsText(1)
@@ -24,7 +33,8 @@ for f in field_array:
 	search_cursor = arcpy.SearchCursor(inlyr)
 	stat_array = []
 	for row in search_cursor:
-		stat_array.append(row.getValue(f))
+		if is_numeric(row.getValue(f)):
+			stat_array.append(row.getValue(f))
 	m = numpy.mean(stat_array)
 	stat_store[f]['mean'] = m
 	s = numpy.std(stat_array)
