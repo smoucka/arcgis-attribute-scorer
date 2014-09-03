@@ -1,4 +1,4 @@
-import arcpy, numpy
+import arcpy, numpy, csv
 	
 def score(mean, sd, stat):
 	temp_score = 0
@@ -22,10 +22,16 @@ def is_numeric(num):
 	
 inlyr = arcpy.GetParameterAsText(0)
 fields = arcpy.GetParameterAsText(1)
+csv_loc = arcpy.GetParameterAsText(2)
 
 field_array = fields.split(';')
 
 stat_store = {}
+
+# Create csv for output and write header
+csv_file = open(csv_loc + '/Scorer_Stats_Output.csv', 'wb')
+csvwriter = csv.writer(csv_file)
+csvwriter.writerow(['FIELD', 'MEAN', 'STD'])
 
 # Calculate stats
 for f in field_array:
@@ -39,7 +45,9 @@ for f in field_array:
 	stat_store[f]['mean'] = m
 	s = numpy.std(stat_array)
 	stat_store[f]['std'] = s
-
+	# Export stats to CSV file
+	csvwriter.writerow([f, m, s])
+	
 # Score stats	
 for f in field_array:
 	# Add score field
@@ -56,7 +64,6 @@ for f in field_array:
 # Field name for aggregated score
 final_score_field = 'FINALSCORE'
 
-# 	
 arcpy.AddField_management(inlyr, final_score_field, 'SHORT')
 final_cursor = arcpy.UpdateCursor(inlyr)
 for row in final_cursor:
@@ -67,4 +74,4 @@ for row in final_cursor:
 	final_cursor.updateRow(row)
 	
 del final_cursor
-arcpy.AddMessage(stat_store)
+csv_file.close()
